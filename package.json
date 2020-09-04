@@ -1,0 +1,22 @@
+{
+  "name": "e-file-electron",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w yourmodule",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "shidoitsuka",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "electron": "^10.1.1",
+    "electron-rebuild": "^2.0.1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^7.1.0",
+    "handlebars": "^4.7.6",
+    "jquery": "^3.5.1"
+  }
+}

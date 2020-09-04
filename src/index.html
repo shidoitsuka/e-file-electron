@@ -1,0 +1,322 @@
+<!-- Modules -->
+<script>
+  const $ = (jQuery = require("jquery"));
+  const db = require("better-sqlite3")("e-file.db");
+  const fs = require("fs");
+  db.exec("CREATE TABLE IF NOT EXISTS category('name' varchar)");
+  db.exec(
+    "CREATE TABLE IF NOT EXISTS document('id' INTEGER PRIMARY KEY, 'name' varchar, 'category' varchar, 'directory' varchar, 'date' varchar, 'accept' interger DEFAULT 0, 'decline' interger DEFAULT 0)"
+  );
+  const categoryData = db.prepare("SELECT * FROM category").all();
+  const documentData = db.prepare("SELECT * FROM document").all();
+  const documentDataToShow = db.prepare("SELECT * FROM document WHERE accept=1").all();
+</script>
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="script-src 'self' 'unsafe-inline';"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+    />
+    <!-- Google Fonts -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
+    />
+    <!-- Material Design Bootstrap -->
+    <link href="../assets/css/mdb.min.css" rel="stylesheet" />
+    <link href="../assets/css/datatables.min.css" rel="stylesheet" />
+
+    <style>
+      * {
+        /* border: 1px solid red; */
+      }
+      .tab-upload-container {
+        height: 80vh;
+      }
+      .e-file-logo {
+        height: auto;
+        width: 150px;
+      }
+    </style>
+
+    <title>Document</title>
+  </head>
+  <body>
+    <!-- Tabs navs -->
+    <ul class="nav nav-fill nav-tabs mb-3" id="ex1" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" data-toggle="tab" href="#tab-document" role="tab" onclick="updateRoute('dokumen')">Dokumen</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a
+          class="nav-link active"
+          data-toggle="tab"
+          href="#tab-upload"
+          role="tab"
+          >Upload</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" data-toggle="tab" href="#tab-validate" role="tab"
+          >Validate</a
+        >
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" data-toggle="tab" href="#tab-category" role="tab"
+          >Category</a
+        >
+      </li>
+    </ul>
+    <!-- Tabs navs -->
+
+    <!-- Tabs content -->
+
+    <div class="tab-content" id="ex1-content">
+      <div class="tab-pane fade" id="tab-document" role="tabpanel">
+        <div class="container">
+          <div class="row">
+            <div class="col">
+              <table class="table table-striped" id="table-document">
+                <thead>
+                  <tr>
+                    <th>Nama Dokumen</th>
+                    <th>Tanggal Masuk</th>
+                    <th>Tipe Dokumen</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <script>
+                    documentDataToShow.map(a => {
+                      document.write(`<tr>
+                        <td>${a.name}</td>
+                        <td>${a.date}</td>
+                        <td>${a.name.slice(a.name.lastIndexOf("."))}</td>
+                        <td><a class="btn btn-sm btn-dark" onclick="downloadDocument('${a.id}')">Unduh</a></td>
+                      </tr>`);
+                    })
+                  </script>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade show active" id="tab-upload" role="tabpanel">
+        <div class="container">
+          <div class="row tab-upload-container">
+            <div
+              class="col-12 d-flex justify-content-center align-items-center"
+            >
+              <img src="../assets/img/e-file.svg" class="e-file-logo" />
+            </div>
+            <div
+              class="col-12 d-flex flex-column justify-content-start align-items-center"
+            >
+              <div class="form-file">
+                <input type="file" class="form-file-input" id="upload-file" />
+                <label class="form-file-label" for="upload-file">
+                  <span class="form-file-text">Pilih Dokumen...</span>
+                  <span class="form-file-button">Browse</span>
+                </label>
+              </div>
+
+              <div class="mt-3">
+                <select class="select" id="select-category">
+                  <option value="" selected disabled>- Pilih Kategori -</option>
+                  <script>
+                    categoryData.map((a) => {
+                      document.write(`<option value='${a.name}'>
+                        ${a.name}
+                      </option>`);
+                    });
+                  </script>
+                </select>
+              </div>
+
+              <div class="mt-3">
+                <a class="btn btn-primary" href="#" onclick="uploadDocument()"
+                  >Upload</a
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-validate" role="tabpanel">
+        <div class="container">
+          <div class="row">
+            <div class="col">
+              <table class="table table-striped" id="table-validate">
+                <thead>
+                  <tr>
+                    <th>Nama Dokumen</th>
+                    <th>Tanggal Masuk</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <script>
+                    documentData.map((a) => {
+                      document.write(`<tr>
+                        <td>${a.name}</td>
+                        <td>${a.date}</td>
+                        <td class="d-flex align-items-center ${
+                          a.accept == 1
+                            ? "bg-success"
+                            : a.decline == 1
+                            ? "bg-danger"
+                            : "bg-warning"
+                        }">
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="validateDocument${a.id}" type="radio" id="radio-accept" ${a.accept == 1 ? "checked" : ""} value="accept" />
+                              <label class="form-check-label" for="radio-accept">Setuju</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                              <input class="form-check-input" name="validateDocument${a.id}" type="radio" id="radio-accept" ${a.decline == 1 ? "checked" : ""} value="decline" />
+                              <label class="form-check-label" for="radio-decline">Tolak</label>
+                            </div>
+                              <a class="btn btn-sm btn-dark" onclick="validateDocument('${a.id}')">Submit</a>
+                        </td>
+                      </tr>`);
+                    });
+                  </script>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade" id="tab-category" role="tabpanel">
+        <div class="container">
+          <div class="row">
+            <div class="col-12">
+              <div class="input-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="categoryName"
+                  placeholder="Nama Kategori"
+                />
+                <a
+                  class="input-group-text btn btn-primary"
+                  id="add-category"
+                  onclick="addCategory();"
+                  >Tambah</a
+                >
+              </div>
+            </div>
+            <div class="col-12 mt-5">
+              <table class="table table-striped" id="table-category">
+                <thead>
+                  <tr>
+                    <th>Kategori</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="table-category-row">
+                  <script>
+                    categoryData.map((a) => {
+                      document.write(`<tr>
+                        <td>${a.name}</td>
+                        <td><a class="btn btn-danger" onlick="deleteCategory('${a.name}')">Hapus</a></td>
+                      </tr>`);
+                    });
+                  </script>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tabs content -->
+
+    <!-- Bootstrap tooltips -->
+    <script type="text/javascript" src="../assets/js/popper.js"></script>
+    <!-- MDB core JavaScript -->
+    <script type="text/javascript" src="../assets/js/mdb.min.js"></script>
+    <!-- JQuery DataTable -->
+    <script
+      type="text/javascript"
+      src="../assets/js/datatables.min.js"
+    ></script>
+    <!-- User defined -->
+    <script>
+      $(document).ready(function () {
+        $("#table-category").DataTable();
+        $("#table-validate").DataTable();
+      });
+      function addCategory() {
+        const name = $("#categoryName").val();
+        const insert = db.prepare("INSERT INTO category(name) VALUES(@name)");
+        insert.run({ name });
+        location.href = "index.html";
+      }
+      function deleteCategory(name) {
+        console.log(name);
+      }
+      function uploadDocument() {
+        const doc = document.getElementById("upload-file").files[0];
+        const saveName = doc.name;
+        const category = $("#select-category").val();
+        if (doc) {
+          const file = new FileReader();
+          console.log("file");
+          console.log(file);
+          file.onload = function (fileData) {
+            const fileBlob = fileData.target.result;
+            if (!fs.existsSync(`./data/${category}`))
+              fs.mkdirSync(`./data/${category}`);
+            fs.writeFileSync(
+              `./data/${category}/${saveName}`,
+              fileBlob.split(";base64,").pop(),
+              { encoding: "base64" }
+            );
+            const d = new Date();
+            const dateIn = `${d.getDate()}-${
+              d.getMonth() + 1
+            }-${d.getFullYear()}/${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
+            const insert = db.prepare(
+              "INSERT INTO document(name, category, directory, date) VALUES(@name, @category, @directory, @date)"
+            );
+            insert.run({
+              name: saveName,
+              category,
+              directory: `./data/${category}/${saveName}`,
+              date: dateIn,
+            });
+          };
+          file.readAsDataURL(doc);
+        }
+      }
+      function validateDocument(id) {
+        const value = $(`input:radio[name='validateDocument${id}']:checked`).val();
+        if (value == "accept") {
+          db.prepare(`UPDATE document SET accept='1', decline='0' WHERE id=${id}`).run();
+          console.log("accepted");
+        } else {
+          db.prepare(`UPDATE document SET accept='0', decline='1' WHERE id=${id}`).run();
+          console.log("declined");
+        }
+      }
+      function downloadDocument(id) {
+        
+      }
+    </script>
+  </body>
+</html>
