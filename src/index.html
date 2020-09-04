@@ -3,6 +3,7 @@
   const $ = (jQuery = require("jquery"));
   const db = require("better-sqlite3")("e-file.db");
   const fs = require("fs");
+  const FileSaver = require("file-saver");
   db.exec("CREATE TABLE IF NOT EXISTS category('name' varchar)");
   db.exec(
     "CREATE TABLE IF NOT EXISTS document('id' INTEGER PRIMARY KEY, 'name' varchar, 'category' varchar, 'directory' varchar, 'date' varchar, 'accept' interger DEFAULT 0, 'decline' interger DEFAULT 0)"
@@ -55,7 +56,7 @@
     <!-- Tabs navs -->
     <ul class="nav nav-fill nav-tabs mb-3" id="ex1" role="tablist">
       <li class="nav-item" role="presentation">
-        <a class="nav-link" data-toggle="tab" href="#tab-document" role="tab" onclick="updateRoute('dokumen')">Dokumen</a
+        <a class="nav-link" data-toggle="tab" href="#tab-document" role="tab">Dokumen</a
         >
       </li>
       <li class="nav-item" role="presentation">
@@ -315,7 +316,10 @@
         }
       }
       function downloadDocument(id) {
-        
+        const rawFile = db.prepare(`SELECT * FROM document WHERE id=${id}`).get();
+        const fileBlob = fs.readFileSync(rawFile.directory);
+        const fileToSave = new File([fileBlob], rawFile.name);
+        FileSaver.saveAs(fileToSave);
       }
     </script>
   </body>

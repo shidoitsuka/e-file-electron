@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^7.1.0",
+    "file-saver": "^2.0.2",
     "handlebars": "^4.7.6",
     "jquery": "^3.5.1"
   }
