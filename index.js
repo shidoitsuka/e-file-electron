@@ -8,8 +8,8 @@ function createWindow() {
       nodeIntegration: true,
     },
   });
+  win.removeMenu();
   win.loadFile("src/index.html");
-  win.webContents.openDevTools();
 }
 
 app.whenReady().then(createWindow);

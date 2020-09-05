@@ -10,7 +10,9 @@
   );
   const categoryData = db.prepare("SELECT * FROM category").all();
   const documentData = db.prepare("SELECT * FROM document").all();
-  const documentDataToShow = db.prepare("SELECT * FROM document WHERE accept=1").all();
+  const documentDataToShow = db
+    .prepare("SELECT * FROM document WHERE accept=1")
+    .all();
 </script>
 
 <!DOCTYPE html>
@@ -56,7 +58,8 @@
     <!-- Tabs navs -->
     <ul class="nav nav-fill nav-tabs mb-3" id="ex1" role="tablist">
       <li class="nav-item" role="presentation">
-        <a class="nav-link" data-toggle="tab" href="#tab-document" role="tab">Dokumen</a
+        <a class="nav-link" data-toggle="tab" href="#tab-document" role="tab"
+          >Dokumen</a
         >
       </li>
       <li class="nav-item" role="presentation">
@@ -93,20 +96,24 @@
                   <tr>
                     <th>Nama Dokumen</th>
                     <th>Tanggal Masuk</th>
+                    <th>Kategori</th>
                     <th>Tipe Dokumen</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   <script>
-                    documentDataToShow.map(a => {
+                    documentDataToShow.map((a) => {
                       document.write(`<tr>
                         <td>${a.name}</td>
                         <td>${a.date}</td>
+                        <td>${a.category}</td>
                         <td>${a.name.slice(a.name.lastIndexOf("."))}</td>
-                        <td><a class="btn btn-sm btn-dark" onclick="downloadDocument('${a.id}')">Unduh</a></td>
+                        <td><a class="btn btn-sm btn-dark" onclick="downloadDocument('${
+                          a.id
+                        }')">Unduh</a></td>
                       </tr>`);
-                    })
+                    });
                   </script>
                 </tbody>
               </table>
@@ -166,6 +173,7 @@
                   <tr>
                     <th>Nama Dokumen</th>
                     <th>Tanggal Masuk</th>
+                    <th>Kategori</th>
                     <th>Aksi</th>
                   </tr>
                 </thead>
@@ -175,6 +183,7 @@
                       document.write(`<tr>
                         <td>${a.name}</td>
                         <td>${a.date}</td>
+                        <td>${a.category}</td>
                         <td class="d-flex align-items-center ${
                           a.accept == 1
                             ? "bg-success"
@@ -183,14 +192,24 @@
                             : "bg-warning"
                         }">
                             <div class="form-check form-check-inline">
-                              <input class="form-check-input" name="validateDocument${a.id}" type="radio" id="radio-accept" ${a.accept == 1 ? "checked" : ""} value="accept" />
+                              <input class="form-check-input" name="validateDocument${
+                                a.id
+                              }" type="radio" id="radio-accept" ${
+                        a.accept == 1 ? "checked" : ""
+                      } value="accept" />
                               <label class="form-check-label" for="radio-accept">Setuju</label>
                             </div>
                             <div class="form-check form-check-inline">
-                              <input class="form-check-input" name="validateDocument${a.id}" type="radio" id="radio-accept" ${a.decline == 1 ? "checked" : ""} value="decline" />
+                              <input class="form-check-input" name="validateDocument${
+                                a.id
+                              }" type="radio" id="radio-accept" ${
+                        a.decline == 1 ? "checked" : ""
+                      } value="decline" />
                               <label class="form-check-label" for="radio-decline">Tolak</label>
                             </div>
-                              <a class="btn btn-sm btn-dark" onclick="validateDocument('${a.id}')">Submit</a>
+                              <a class="btn btn-sm btn-dark" onclick="validateDocument('${
+                                a.id
+                              }')">Submit</a>
                         </td>
                       </tr>`);
                     });
@@ -234,7 +253,7 @@
                     categoryData.map((a) => {
                       document.write(`<tr>
                         <td>${a.name}</td>
-                        <td><a class="btn btn-danger" onlick="deleteCategory('${a.name}')">Hapus</a></td>
+                        <td><a class="btn btn-danger" onclick="deleteCategory('${a.name}')">Hapus</a></td>
                       </tr>`);
                     });
                   </script>
@@ -267,11 +286,20 @@
         const insert = db.prepare("INSERT INTO category(name) VALUES(@name)");
         insert.run({ name });
         location.href = "index.html";
+        location.reload();
       }
       function deleteCategory(name) {
         console.log(name);
+        const insert = db.prepare(`DELETE FROM category WHERE name='${name}'`);
+        insert.run();
+        location.reload();
       }
       function uploadDocument() {
+        if (
+          $("#upload-file").val() == "" ||
+          $("#select-category").val() == null
+        )
+          return alert("Mohon Lengkapi Form!");
         const doc = document.getElementById("upload-file").files[0];
         const saveName = doc.name;
         const category = $("#select-category").val();
@@ -303,20 +331,33 @@
             });
           };
           file.readAsDataURL(doc);
+          location.reload();
         }
       }
       function validateDocument(id) {
-        const value = $(`input:radio[name='validateDocument${id}']:checked`).val();
+        const value = $(
+          `input:radio[name='validateDocument${id}']:checked`
+        ).val();
+        if (typeof value == "undefined")
+          return alert("Pilih Antara Setuju atau Tolak!");
         if (value == "accept") {
-          db.prepare(`UPDATE document SET accept='1', decline='0' WHERE id=${id}`).run();
+          db.prepare(
+            `UPDATE document SET accept='1', decline='0' WHERE id=${id}`
+          ).run();
           console.log("accepted");
+          location.reload();
         } else {
-          db.prepare(`UPDATE document SET accept='0', decline='1' WHERE id=${id}`).run();
+          db.prepare(
+            `UPDATE document SET accept='0', decline='1' WHERE id=${id}`
+          ).run();
           console.log("declined");
+          location.reload();
         }
       }
       function downloadDocument(id) {
-        const rawFile = db.prepare(`SELECT * FROM document WHERE id=${id}`).get();
+        const rawFile = db
+          .prepare(`SELECT * FROM document WHERE id=${id}`)
+          .get();
         const fileBlob = fs.readFileSync(rawFile.directory);
         const fileToSave = new File([fileBlob], rawFile.name);
         FileSaver.saveAs(fileToSave);
